@@ -1,1 +1,16 @@
-
+image_id,patient_id,age,gender,image_size,image_format,helix_coverage,antihelix_coverage,concha_coverage,lobule_coverage,total_coverage,analysis_confidence,ear_condition,scan_quality,timestamp
+EAR_001,P_045,45,Male,1024x768,JPEG,25.3,18.7,12.5,8.2,64.7,0.89,Normal,Excellent,2024-01-15 09:30:00
+EAR_002,P_062,62,Female,800x600,PNG,22.1,16.8,11.2,7.8,57.9,0.76,Mild_Deformity,Good,2024-01-15 10:15:00
+EAR_003,P_038,38,Male,1920x1080,JPEG,27.8,20.3,13.9,9.1,71.1,0.94,Normal,Excellent,2024-01-15 11:20:00
+EAR_004,P_055,55,Female,1200x800,JPEG,19.5,14.2,9.8,6.5,50.0,0.68,Inflammation,Fair,2024-01-15 13:45:00
+EAR_005,P_041,41,Male,1024x768,PNG,24.7,17.9,12.1,8.0,62.7,0.82,Normal,Good,2024-01-15 14:30:00
+EAR_006,P_067,67,Female,800x600,JPEG,16.8,12.5,8.3,5.2,42.8,0.59,Severe_Deformity,Poor,2024-01-15 15:10:00
+EAR_007,P_029,29,Male,1920x1080,JPEG,28.9,21.7,14.5,9.8,74.9,0.96,Normal,Excellent,2024-01-15 16:05:00
+EAR_008,P_050,50,Female,1024x768,PNG,23.4,16.5,11.8,7.4,59.1,0.79,Mild_Inflammation,Good,2024-01-15 16:50:00
+EAR_009,P_058,58,Male,1200x800,JPEG,21.7,15.9,10.7,6.9,55.2,0.73,Scarring,Fair,2024-01-15 17:30:00
+EAR_010,P_033,33,Female,1024x768,JPEG,26.2,19.4,13.2,8.7,67.5,0.91,Normal,Excellent,2024-01-15 18:15:00
+EAR_011,P_047,47,Male,800x600,PNG,24.1,17.2,11.9,7.8,61.0,0.84,Normal,Good,2024-01-15 19:00:00
+EAR_012,P_063,63,Female,1920x1080,JPEG,15.2,11.8,7.5,4.8,39.3,0.52,Severe_Deformity,Poor,2024-01-15 20:20:00
+EAR_013,P_036,36,Male,1024x768,JPEG,27.5,20.1,13.8,9.0,70.4,0.93,Normal,Excellent,2024-01-16 08:45:00
+EAR_014,P_052,52,Female,1200x800,PNG,22.8,16.3,11.5,7.2,57.8,0.77,Mild_Deformity,Good,2024-01-16 09:30:00
+EAR_015,P_044,44,Male,1024x768,JPEG,25.9,18.9,12.8,8.4,66.0,0.88,Normal,Excellent,2024-01-16 10:15:00
