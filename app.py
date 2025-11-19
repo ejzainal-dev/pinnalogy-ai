@@ -1,23 +1,38 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-from PIL import Image
-import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime
-import io
-import base64
+import sys
+import os
 
+# Try to import OpenCV with fallback
+try:
+    import cv2
+    CV_AVAILABLE = True
+except ImportError as e:
+    st.error(f"OpenCV not available: {e}")
+    CV_AVAILABLE = False
+
+try:
+    import tensorflow as tf
+    TF_AVAILABLE = True
+except ImportError as e:
+    st.error(f"TensorFlow not available: {e}")
+    TF_AVAILABLE = False
+
+import numpy as np
+import pandas as pd
+from PIL import Image
+import tempfile
+
+# Your app code continues here...
 st.set_page_config(
     page_title="Pinnalogy AI - Ear Analysis",
     page_icon="👂",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# Rest of your application code would go here...
 st.title("Pinnalogy AI - Ear Analysis")
-st.write("Upload an ear image for analysis")
+
+if not CV_AVAILABLE:
+    st.warning("OpenCV is not available. Some image processing features may not work.")
 # Custom CSS
 st.markdown("""
 <style>
