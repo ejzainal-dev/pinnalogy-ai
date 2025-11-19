@@ -6,3 +6,5 @@ Pillow
 plotly
 tensorflow-cpu
 streamlit-authenticator
+streamlit
+pyyaml
