@@ -78,15 +78,13 @@ def test_supabase_connection():
         return False
 
 # ===== AUTHENTICATION =====
-def hash_password(password):
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-def verify_password(password, hashed_password):
-    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
-
 def authenticate_user(username, password):
     try:
-        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        # Add connection timeout
+        conn = psycopg2.connect(
+            os.getenv('DATABASE_URL'),
+            connect_timeout=10
+        )
         cur = conn.cursor()
         cur.execute(
             "SELECT username, name, password_hash, role FROM users WHERE username = %s",
@@ -100,6 +98,9 @@ def authenticate_user(username, password):
             return result[1], True, result[0]
         else:
             return None, False, None
+    except psycopg2.OperationalError as e:
+        st.error(f"❌ Network error: Cannot connect to Supabase. Check firewall settings.")
+        return None, False, None
     except Exception as e:
         st.error(f"Authentication error: {e}")
         return None, False, None
