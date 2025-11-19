@@ -3,12 +3,81 @@ import psycopg2
 import os
 from dotenv import load_dotenv
 import bcrypt
-from datetime import datetime
 
 # Load environment variables
 load_dotenv()
 
-# ==================== PASSWORD FUNCTIONS ====================
+# ==================== SUPABASE DATABASE SETUP ====================
+def init_supabase_database():
+    """Initialize Supabase database tables"""
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        cur = conn.cursor()
+        
+        # Create users table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                role VARCHAR(20) DEFAULT 'practitioner',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Create admin user if not exists
+        cur.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
+        if cur.fetchone()[0] == 0:
+            hashed_pw = bcrypt.hashpw('admin123'.encode(), bcrypt.gensalt()).decode()
+            cur.execute("""
+                INSERT INTO users (username, email, name, password_hash, role)
+                VALUES (%s, %s, %s, %s, %s)
+            """, ('admin', 'admin@pinnalogy.com', 'Admin User', hashed_pw, 'admin'))
+            st.success("✅ Admin user created!")
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        return True
+        
+    except Exception as e:
+        st.error(f"❌ Database setup failed: {e}")
+        return False
+
+def test_supabase_connection():
+    """Test Supabase connection"""
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        st.success("🎉 SUPABASE CONNECTION SUCCESSFUL!")
+        
+        # Initialize database
+        if init_supabase_database():
+            st.success("✅ Database tables initialized!")
+        
+        # Show database info
+        cur = conn.cursor()
+        cur.execute("SELECT version();")
+        st.write(f"**Database:** {cur.fetchone()[0]}")
+        
+        # Show tables
+        cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+        tables = cur.fetchall()
+        if tables:
+            st.write("**Tables Created:**")
+            for table in tables:
+                st.write(f"✅ {table[0]}")
+        
+        cur.close()
+        conn.close()
+        return True
+        
+    except Exception as e:
+        st.error(f"❌ Connection failed: {e}")
+        return False
+
+# ===== AUTHENTICATION =====
 def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
@@ -35,157 +104,82 @@ def authenticate_user(username, password):
         st.error(f"Authentication error: {e}")
         return None, False, None
 
-# ==================== DATABASE FUNCTIONS ====================
-def init_database():
-    """Initialize database tables"""
-    try:
-        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-        cur = conn.cursor()
-        
-        # Create users table
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(50) UNIQUE NOT NULL,
-                email VARCHAR(100) UNIQUE NOT NULL,
-                name VARCHAR(100) NOT NULL,
-                password_hash VARCHAR(255) NOT NULL,
-                role VARCHAR(20) DEFAULT 'practitioner',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # Check if admin exists
-        cur.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
-        admin_exists = cur.fetchone()[0]
-        
-        # Create admin user if not exists
-        if admin_exists == 0:
-            hashed_password = hash_password('admin123')
-            cur.execute("""
-                INSERT INTO users (username, email, name, password_hash, role) 
-                VALUES (%s, %s, %s, %s, %s)
-            """, ('admin', 'admin@pinnalogy.com', 'Admin User', hashed_password, 'admin'))
-        
-        conn.commit()
-        cur.close()
-        conn.close()
-        return True
-        
-    except Exception as e:
-        st.error(f"Database initialization failed: {e}")
-        return False
-
-def test_database_connection():
-    """Test database connection"""
-    try:
-        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-        st.success("✅ PostgreSQL Connection SUCCESSFUL!")
-        
-        # Initialize database
-        if init_database():
-            st.success("✅ Database tables initialized!")
-        
-        # Get database info
-        cur = conn.cursor()
-        cur.execute("SELECT version();")
-        db_version = cur.fetchone()
-        st.write(f"**Database Version:** {db_version[0]}")
-        
-        # Show existing users
-        cur.execute("SELECT username, email, role FROM users")
-        users = cur.fetchall()
-        if users:
-            st.write("**Existing Users:**")
-            for user in users:
-                st.write(f"- {user[0]} ({user[1]}) - {user[2]}")
-        
-        cur.close()
-        conn.close()
-        return True
-        
-    except Exception as e:
-        st.error(f"❌ Database Connection FAILED: {e}")
-        return False
-
-# ===== CONFIGURATION =====
+# ===== APP CONFIG =====
 st.set_page_config(
-    page_title="Pinnalogy AI - Professional Ear Analysis",
-    page_icon="👂", 
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="Pinnalogy AI - Supabase",
+    page_icon="👂",
+    layout="wide"
 )
 
 # ===== MAIN APP =====
 def main():
     st.title("👂 Pinnalogy AI Professional")
-    st.markdown("## Ear Reflexology Analysis System")
+    st.markdown("## Supabase Database System")
     
     # Initialize session state
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
-    if 'username' not in st.session_state:
-        st.session_state.username = None
-    if 'name' not in st.session_state:
-        st.session_state.name = None
     
     # Sidebar
     with st.sidebar:
-        st.header("Tools")
-        if st.button("🔗 Test Database Connection"):
-            test_database_connection()
+        st.header("🔧 Tools")
+        if st.button("Test Supabase Connection"):
+            test_supabase_connection()
         
         if st.session_state.authenticated:
-            st.success(f"Logged in as: {st.session_state.name}")
             if st.button("🚪 Logout"):
                 for key in list(st.session_state.keys()):
                     del st.session_state[key]
                 st.rerun()
     
-    # Authentication
+    # Main content
     if not st.session_state.authenticated:
-        show_login_interface()
+        show_login()
     else:
-        show_main_interface()
+        show_dashboard()
 
-def show_login_interface():
-    """Show login form"""
-    st.header("🔐 Practitioner Login")
+def show_login():
+    st.header("🔐 Login to Pinnalogy AI")
     
     with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        username = st.text_input("Username", value="admin")
+        password = st.text_input("Password", type="password", value="admin123")
         
         if st.form_submit_button("Login"):
-            if username and password:
-                name, auth_status, username = authenticate_user(username, password)
-                if auth_status:
-                    st.session_state.authenticated = True
-                    st.session_state.username = username
-                    st.session_state.name = name
-                    st.success(f"Welcome {name}!")
-                    st.rerun()
-                else:
-                    st.error("Invalid username or password")
+            name, auth_status, username = authenticate_user(username, password)
+            if auth_status:
+                st.session_state.authenticated = True
+                st.session_state.name = name
+                st.session_state.username = username
+                st.success(f"Welcome {name}!")
+                st.rerun()
             else:
-                st.warning("Please enter username and password")
+                st.error("Login failed!")
     
-    st.info("**Demo Account:** admin / admin123")
+    st.info("**Demo:** admin / admin123")
 
-def show_main_interface():
-    """Show main interface after login"""
-    st.success(f"🎉 Welcome back, {st.session_state.name}!")
-    st.header("🚀 Ready for Supabase Migration")
-    st.write("Database connection is working! Next step: Migrate to Supabase.")
+def show_dashboard():
+    st.success(f"🎉 Welcome, {st.session_state.name}!")
+    st.balloons()
     
-    # Simple dashboard
+    st.header("🚀 Supabase Migration Complete!")
+    st.write("Your database is now running on Supabase Cloud!")
+    
+    # Quick stats
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("System Status", "Active")
+        st.metric("Database", "Supabase")
     with col2:
-        st.metric("Database", "Connected")
+        st.metric("Status", "Active")
     with col3:
-        st.metric("Next Step", "Supabase Setup")
+        st.metric("Storage", "500MB Free")
+    
+    st.markdown("---")
+    st.subheader("Next Steps:")
+    st.write("1. ✅ Add patient management system")
+    st.write("2. ✅ Build ear analysis with image upload")
+    st.write("3. ✅ Implement AI training features")
+    st.write("4. 🚀 Deploy production app")
 
 if __name__ == "__main__":
     main()
