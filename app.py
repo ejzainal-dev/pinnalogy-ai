@@ -2,10 +2,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from PIL import Image
-import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime
 import io
+import base64
+from datetime import datetime
 
 st.set_page_config(
     page_title="Pinnalogy AI - Ear Analysis",
@@ -34,22 +33,19 @@ st.markdown("""
 
 st.markdown('<div class="main-header">👂 Pinnalogy AI - Ear Analysis Dashboard</div>', unsafe_allow_html=True)
 
-# Create sample data function
+# Create sample data
 def create_sample_data():
     return pd.DataFrame({
-        'patient_id': [f'P_{i:03d}' for i in range(1, 21)],
-        'age': [25, 34, 47, 52, 38, 61, 29, 45, 56, 33, 42, 58, 31, 49, 27, 39, 53, 36, 44, 60],
-        'gender': ['M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F'],
+        'patient_id': [f'P_{i:03d}' for i in range(1, 16)],
+        'age': [25, 34, 47, 52, 38, 61, 29, 45, 56, 33, 42, 58, 31, 49, 27],
+        'gender': ['M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M'],
         'ear_condition': ['Normal', 'Infection', 'Normal', 'Wax Buildup', 'Normal', 'Perforation', 
                          'Normal', 'Inflammation', 'Scarring', 'Normal', 'Infection', 'Deformity',
-                         'Normal', 'Wax Buildup', 'Normal', 'Inflammation', 'Scarring', 'Normal', 'Infection', 'Deformity'],
-        'hearing_loss_db': [15, 35, 12, 28, 18, 65, 10, 32, 45, 14, 38, 72, 11, 25, 16, 30, 48, 13, 40, 68],
+                         'Normal', 'Wax Buildup', 'Normal'],
+        'hearing_loss_db': [15, 35, 12, 28, 18, 65, 10, 32, 45, 14, 38, 72, 11, 25, 16],
         'scan_quality': ['Excellent', 'Good', 'Excellent', 'Fair', 'Good', 'Poor', 'Excellent', 'Good', 
-                        'Fair', 'Excellent', 'Good', 'Poor', 'Excellent', 'Fair', 'Good', 'Good', 'Fair', 'Excellent', 'Good', 'Poor'],
-        'treatment_plan': ['None', 'Medication', 'None', 'Cleaning', 'None', 'Surgery', 'None', 'Medication',
-                          'Monitoring', 'None', 'Medication', 'Surgery', 'None', 'Cleaning', 'None', 'Medication',
-                          'Monitoring', 'None', 'Medication', 'Surgery'],
-        'visit_date': pd.date_range('2024-01-01', periods=20, freq='D')
+                        'Fair', 'Excellent', 'Good', 'Poor', 'Excellent', 'Fair', 'Good'],
+        'visit_date': pd.date_range('2024-01-01', periods=15, freq='D')
     })
 
 @st.cache_data
@@ -64,26 +60,25 @@ def load_data():
 def analyze_ear_image(image):
     """Simple image analysis without OpenCV"""
     try:
-        # Convert to numpy array
-        img_array = np.array(image)
-        
         # Get basic image stats
-        height, width = img_array.shape[0], img_array.shape[1]
+        width, height = image.size
         file_size = len(image.tobytes()) / 1024  # KB
         
         # Simple "analysis" based on image characteristics
-        if height > 1000 and width > 1000:
+        if width > 1000 and height > 1000:
             quality = "Excellent"
             confidence = 0.9
-        elif height > 500 and width > 500:
+        elif width > 500 and height > 500:
             quality = "Good" 
             confidence = 0.7
         else:
             quality = "Fair"
             confidence = 0.5
             
-        # Simulate anatomical coverage (random for demo)
-        np.random.seed(hash(image.tobytes()) % 1000)
+        # Simulate anatomical coverage (based on image hash for consistency)
+        image_hash = hash(image.tobytes()) % 1000
+        np.random.seed(image_hash)
+        
         helix = np.random.uniform(20, 30)
         antihelix = np.random.uniform(15, 25)
         concha = np.random.uniform(10, 20)
@@ -94,22 +89,24 @@ def analyze_ear_image(image):
             'antihelix': antihelix, 
             'concha': concha,
             'lobule': lobule,
-            'total': helix + antihelix + antihelix + lobule,
+            'total': helix + antihelix + concha + lobule,
             'quality': quality,
-            'confidence': confidence
+            'confidence': confidence,
+            'width': width,
+            'height': height
         }
         
-        return coverage_data, img_array
+        return coverage_data
         
     except Exception as e:
         st.error(f"Analysis error: {str(e)}")
-        return None, None
+        return None
 
 # Load data
 df = load_data()
 
 # Main app
-tab1, tab2, tab3 = st.tabs(["📷 Image Analysis", "📊 Patient Analytics", "🏥 Clinic Overview"])
+tab1, tab2 = st.tabs(["📷 Image Analysis", "📊 Patient Analytics"])
 
 with tab1:
     st.header("Ear Image Analysis")
@@ -132,25 +129,44 @@ with tab1:
         
         if st.button("Analyze Image", type="primary"):
             with st.spinner("Analyzing ear image..."):
-                results, img_array = analyze_ear_image(image)
+                results = analyze_ear_image(image)
                 
                 if results:
                     with col2:
                         st.subheader("Analysis Results")
                         
                         # Display metrics
-                        cols = st.columns(4)
-                        regions = ['helix', 'antihelix', 'concha', 'lobule']
+                        cols = st.columns(2)
                         
-                        for i, region in enumerate(regions):
-                            with cols[i]:
-                                coverage = results[region]
-                                st.markdown(f"""
-                                <div class="metric-card">
-                                    <h3>{region.upper()}</h3>
-                                    <h2>{coverage:.1f}%</h2>
-                                </div>
-                                """, unsafe_allow_html=True)
+                        with cols[0]:
+                            st.markdown(f"""
+                            <div class="metric-card">
+                                <h3>HELIX</h3>
+                                <h2>{results['helix']:.1f}%</h2>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            st.markdown(f"""
+                            <div class="metric-card">
+                                <h3>ANTIHELIX</h3>
+                                <h2>{results['antihelix']:.1f}%</h2>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with cols[1]:
+                            st.markdown(f"""
+                            <div class="metric-card">
+                                <h3>CONCHA</h3>
+                                <h2>{results['concha']:.1f}%</h2>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            st.markdown(f"""
+                            <div class="metric-card">
+                                <h3>LOBULE</h3>
+                                <h2>{results['lobule']:.1f}%</h2>
+                            </div>
+                            """, unsafe_allow_html=True)
                         
                         # Total coverage
                         st.metric("Total Coverage", f"{results['total']:.1f}%")
@@ -159,21 +175,21 @@ with tab1:
                         
                         # Condition assessment
                         if results['total'] > 70:
-                            st.success("✅ Normal ear anatomy detected")
+                            st.success("✅ **Normal** - Good anatomical coverage detected")
                         elif results['total'] > 50:
-                            st.warning("⚠️ Mild abnormalities detected")
+                            st.warning("⚠️ **Mild Abnormality** - Reduced coverage detected")
                         else:
-                            st.error("🚨 Significant abnormalities detected")
+                            st.error("🚨 **Significant Abnormality** - Low coverage detected")
                     
                     st.success("Analysis completed successfully!")
                     
                     # Show comparison with historical data
                     st.subheader("Historical Comparison")
-                    avg_coverage = df['hearing_loss_db'].mean()  # Using hearing loss as proxy for demo
-                    comparison = (results['total'] / avg_coverage * 100) - 100
+                    avg_hearing_loss = df['hearing_loss_db'].mean()
+                    comparison = (results['total'] / 100 * 50)  # Simple comparison metric
                     
                     st.metric(
-                        "Compared to Average", 
+                        "Compared to Dataset Average", 
                         f"{results['total']:.1f}%",
                         delta=f"{comparison:+.1f}%"
                     )
@@ -182,7 +198,7 @@ with tab2:
     st.header("Patient Analytics")
     
     # Filters
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     
     with col1:
         condition_filter = st.multiselect(
@@ -198,13 +214,13 @@ with tab2:
             default=df['scan_quality'].unique()
         )
     
-    with col3:
-        age_range = st.slider(
-            "Age Range",
-            min_value=int(df['age'].min()),
-            max_value=int(df['age'].max()),
-            value=(int(df['age'].min()), int(df['age'].max()))
-        )
+    # Age range filter
+    age_range = st.slider(
+        "Age Range",
+        min_value=int(df['age'].min()),
+        max_value=int(df['age'].max()),
+        value=(int(df['age'].min()), int(df['age'].max()))
+    )
     
     # Apply filters
     filtered_df = df[
@@ -233,98 +249,22 @@ with tab2:
         excellent_scans = (filtered_df['scan_quality'] == 'Excellent').sum()
         st.metric("Excellent Scans", excellent_scans)
     
-    # Charts
+    # Charts using native Streamlit
     st.subheader("Visualizations")
-    chart_col1, chart_col2 = st.columns(2)
     
-    with chart_col1:
-        # Condition distribution
-        condition_counts = filtered_df['ear_condition'].value_counts()
-        fig_condition = px.pie(
-            values=condition_counts.values,
-            names=condition_counts.index,
-            title="Ear Condition Distribution"
-        )
-        st.plotly_chart(fig_condition, use_container_width=True)
-        
-        # Age distribution
-        fig_age = px.histogram(
-            filtered_df, 
-            x='age',
-            color='gender',
-            title="Patient Age Distribution"
-        )
-        st.plotly_chart(fig_age, use_container_width=True)
+    # Condition distribution
+    st.write("**Ear Condition Distribution**")
+    condition_counts = filtered_df['ear_condition'].value_counts()
+    st.bar_chart(condition_counts)
     
-    with chart_col2:
-        # Hearing loss by condition
-        fig_hearing = px.box(
-            filtered_df,
-            x='ear_condition',
-            y='hearing_loss_db',
-            title="Hearing Loss by Condition"
-        )
-        st.plotly_chart(fig_hearing, use_container_width=True)
-        
-        # Quality distribution
-        quality_counts = filtered_df['scan_quality'].value_counts()
-        fig_quality = px.bar(
-            x=quality_counts.index,
-            y=quality_counts.values,
-            title="Scan Quality Distribution"
-        )
-        st.plotly_chart(fig_quality, use_container_width=True)
+    # Age distribution
+    st.write("**Patient Age Distribution**")
+    age_hist = np.histogram(filtered_df['age'], bins=10)
+    st.bar_chart(pd.DataFrame({'Age': age_hist[1][1:], 'Count': age_hist[0]}).set_index('Age'))
     
     # Data table
     with st.expander("View Patient Data"):
         st.dataframe(filtered_df, use_container_width=True)
-
-with tab3:
-    st.header("Clinic Overview")
-    
-    # Summary statistics
-    st.subheader("Clinic Performance")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Treatment plan distribution
-        treatment_counts = df['treatment_plan'].value_counts()
-        fig_treatment = px.pie(
-            values=treatment_counts.values,
-            names=treatment_counts.index,
-            title="Treatment Plan Distribution"
-        )
-        st.plotly_chart(fig_treatment, use_container_width=True)
-    
-    with col2:
-        # Monthly trend (simulated)
-        monthly_data = pd.DataFrame({
-            'month': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-            'patients': [45, 52, 48, 61, 55, 58],
-            'normal_cases': [35, 38, 36, 42, 40, 41]
-        })
-        
-        fig_trend = px.line(
-            monthly_data,
-            x='month',
-            y=['patients', 'normal_cases'],
-            title="Monthly Patient Trends"
-        )
-        st.plotly_chart(fig_trend, use_container_width=True)
-    
-    # Quick insights
-    st.subheader("Quick Insights")
-    
-    insight_col1, insight_col2 = st.columns(2)
-    
-    with insight_col1:
-        st.info(f"**Most Common Condition**: {df['ear_condition'].mode().iloc[0]}")
-        st.info(f"**Average Patient Age**: {df['age'].mean():.1f} years")
-    
-    with insight_col2:
-        st.info(f"**Need Treatment**: {(df['treatment_plan'] != 'None').sum()} patients")
-        st.info(f"**Data Quality**: {len(df)} records available")
 
 # Sidebar
 with st.sidebar:
@@ -334,8 +274,7 @@ with st.sidebar:
     st.header("Features")
     st.write("• Image Analysis")
     st.write("• Patient Analytics") 
-    st.write("• Clinic Overview")
-    st.write("• Treatment Planning")
+    st.write("• Condition Assessment")
     
     st.header("Sample Data")
     st.write(f"Total Patients: {len(df)}")
@@ -346,4 +285,4 @@ with st.sidebar:
         st.success("Cache cleared!")
 
 st.markdown("---")
-st.markdown("**Pinnalogy AI** | Medical Imaging Analysis Platform")
+st.markdown("**Pinnalogy AI** | Medical Imaging Analysis Platform | Streamlit Cloud Compatible")
