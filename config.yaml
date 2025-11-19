@@ -1,0 +1,16 @@
+credentials:
+  usernames:
+    demo:
+      email: demo@demo.com
+      name: Demo User
+      password: $2b$12$xxxxxxxxxxxx
+    newuser:
+      email: newuser@email.com
+      name: New User
+      password: $2b$12$yyyyyyyyyyyy
+cookie:
+  name: streamlit_auth
+  key: your_secret_key_123
+  expiry_days: 30
+preauthorized:
+  emails: []
