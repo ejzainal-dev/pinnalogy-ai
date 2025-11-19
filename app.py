@@ -7,6 +7,9 @@ import bcrypt
 # Load environment variables
 load_dotenv()
 
+# Load environment variables
+load_dotenv()
+
 # ==================== SUPABASE DATABASE SETUP ====================
 def init_supabase_database():
     """Initialize Supabase database tables"""
@@ -41,6 +44,10 @@ def init_supabase_database():
         cur.close()
         conn.close()
         return True
+        
+    except Exception as e:
+        st.error(f"❌ Database setup failed: {e}")
+        return False
         
     except Exception as e:
         st.error(f"❌ Database setup failed: {e}")
