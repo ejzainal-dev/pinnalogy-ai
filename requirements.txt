@@ -9,3 +9,4 @@ plotly
 opencv-python-headless
 tensorflow-cpu
 pyyaml
+streamlit-authenticator
