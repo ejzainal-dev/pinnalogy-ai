@@ -15,7 +15,30 @@ from yaml.loader import SafeLoader
 from streamlit_authenticator import Authenticate
 import os
 from streamlit_authenticator import Authenticate
+# ==================== DATABASE TEST ====================
+import psycopg2
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
+
+def test_database_connection():
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        st.success("✅ PostgreSQL Connection SUCCESSFUL!")
+        
+        cur = conn.cursor()
+        cur.execute("SELECT version();")
+        db_version = cur.fetchone()
+        st.write(f"Database Version: {db_version[0]}")
+        
+        cur.close()
+        conn.close()
+        return True
+        
+    except Exception as e:
+        st.error(f"❌ Database Connection FAILED: {e}")
+        return False
 # ===== CONFIGURATION =====
 st.set_page_config(
     page_title="Pinnalogy AI - Professional Ear Analysis",
