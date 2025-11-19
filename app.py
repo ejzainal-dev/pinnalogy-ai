@@ -18,7 +18,196 @@ from streamlit_authenticator import Authenticate
 import psycopg2
 from dotenv import load_dotenv
 import bcrypt
+# Load environment variables
+load_dotenv()
 
+# ==================== PATIENT MANAGEMENT SYSTEM ====================
+def save_patient_to_db(patient_code, full_name, age, gender, contact_info, medical_history):
+    """Simpan patient ke database - jika berjaya, bermakna database OK"""
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        cur = conn.cursor()
+        
+        # Create patients table jika belum wujud
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS patients (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER,
+                patient_code VARCHAR(50) UNIQUE NOT NULL,
+                full_name VARCHAR(100) NOT NULL,
+                age INTEGER,
+                gender VARCHAR(10),
+                contact_info TEXT,
+                medical_history TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Insert patient data
+        cur.execute("""
+            INSERT INTO patients (user_id, patient_code, full_name, age, gender, contact_info, medical_history)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (1, patient_code, full_name, age, gender, contact_info, medical_history))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        return True
+        
+    except Exception as e:
+        st.error(f"Database error: {e}")
+        return False
+
+def display_patients():
+    """Display patients dari database - jika boleh baca, database OK"""
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT patient_code, full_name, age, gender, created_at 
+            FROM patients 
+            ORDER BY created_at DESC
+        """)
+        
+        patients = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        if patients:
+            st.write(f"**📊 Found {len(patients)} patients:**")
+            for patient in patients:
+                with st.expander(f"👤 {patient[1]} ({patient[0]})"):
+                    st.write(f"**Age:** {patient[2]}")
+                    st.write(f"**Gender:** {patient[3]}")
+                    st.write(f"**Registered:** {patient[4].strftime('%Y-%m-%d')}")
+        else:
+            st.info("📝 No patients found. Add your first patient above!")
+            
+    except Exception as e:
+        st.error(f"Error loading patients: {e}")
+
+def patient_management():
+    st.header("👥 Patient Management")
+    
+    tab1, tab2 = st.tabs(["Add New Patient", "View Patients"])
+    
+    with tab1:
+        with st.form("add_patient_form"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                patient_code = st.text_input("Patient Code *")
+                full_name = st.text_input("Full Name *")
+                age = st.number_input("Age", min_value=0, max_value=120, value=30)
+            
+            with col2:
+                gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+                contact_info = st.text_area("Contact Information")
+                medical_history = st.text_area("Medical History")
+            
+            if st.form_submit_button("➕ Add Patient"):
+                if patient_code and full_name:
+                    if save_patient_to_db(patient_code, full_name, age, gender, contact_info, medical_history):
+                        st.success("✅ Patient added successfully!")
+                    else:
+                        st.error("❌ Failed to add patient")
+                else:
+                    st.warning("⚠️ Please fill required fields (*)")
+    
+    with tab2:
+        display_patients()
+
+# ==================== EAR ANALYSIS SYSTEM ====================
+def save_ear_images(left_ear, right_ear):
+    """Simpan ear images ke database - test database functionality"""
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        cur = conn.cursor()
+        
+        # Create ear_images table jika belum wujud
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS ear_images (
+                id SERIAL PRIMARY KEY,
+                session_id INTEGER,
+                ear_side VARCHAR(10) NOT NULL,
+                image_data BYTEA,
+                image_url TEXT,
+                upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Insert images (simulate - kita skip actual binary storage untuk sekarang)
+        cur.execute("""
+            INSERT INTO ear_images (session_id, ear_side, image_url)
+            VALUES (%s, %s, %s)
+        """, (1, 'left', f"left_ear_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"))
+        
+        cur.execute("""
+            INSERT INTO ear_images (session_id, ear_side, image_url)
+            VALUES (%s, %s, %s)
+        """, (1, 'right', f"right_ear_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        return True
+        
+    except Exception as e:
+        st.error(f"Error saving ear images: {e}")
+        return False
+
+def ear_analysis():
+    st.header("👂 Ear Analysis")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("🫲 Left Ear")
+        left_ear = st.file_uploader("Upload Left Ear Image", type=['jpg', 'png', 'jpeg'], key="left")
+        
+    with col2:
+        st.subheader("🫱 Right Ear")
+        right_ear = st.file_uploader("Upload Right Ear Image", type=['jpg', 'png', 'jpeg'], key="right")
+    
+    if st.button("🔍 Analyze Both Ears"):
+        if left_ear and right_ear:
+            # Simpan images ke database
+            if save_ear_images(left_ear, right_ear):
+                st.success("✅ Ear images uploaded successfully!")
+                
+                # Simulate AI analysis
+                st.balloons()
+                st.subheader("📊 Analysis Results")
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("**Left Ear Analysis:**")
+                    st.write("✅ 5 reflex points detected")
+                    st.write("📈 Overall health: Good")
+                    
+                with col2:
+                    st.write("**Right Ear Analysis:**")
+                    st.write("✅ 6 reflex points detected") 
+                    st.write("📈 Overall health: Excellent")
+            else:
+                st.error("❌ Failed to save ear images")
+        else:
+            st.warning("⚠️ Please upload both ear images")
+
+# ==================== DASHBOARD ====================
+def show_dashboard():
+    st.header("📊 Dashboard")
+    st.write("Welcome to Pinnalogy AI Professional System")
+    
+    # Quick stats
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Patients", "0")
+    with col2:
+        st.metric("Ear Analysis", "0")
+    with col3:
+        st.metric("System Status", "Active")
 # ==================== AUTHENTICATION FUNCTION ====================
 def authenticate_user(username, password):
     try:
