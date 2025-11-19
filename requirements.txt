@@ -1,10 +1,11 @@
 streamlit
-opencv-python-headless
+psycopg2-binary
+bcrypt
+python-dotenv
+pillow
 pandas
 numpy
-Pillow
 plotly
+opencv-python-headless
 tensorflow-cpu
-streamlit-authenticator
-streamlit
 pyyaml
