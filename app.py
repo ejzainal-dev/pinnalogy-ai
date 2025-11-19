@@ -15,6 +15,31 @@ from yaml.loader import SafeLoader
 from streamlit_authenticator import Authenticate
 import os
 from streamlit_authenticator import Authenticate
+import psycopg2
+from dotenv import load_dotenv
+import bcrypt
+
+# ==================== AUTHENTICATION FUNCTION ====================
+def authenticate_user(username, password):
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT username, name, password_hash, role FROM users WHERE username = %s",
+            (username.lower(),)  # Login dengan USERNAME, bukan email
+        )
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        if result and verify_password(password, result[2]):
+            return result[1], True, result[0]  # name, status, username
+        else:
+            return None, False, None
+    except Exception as e:
+        st.error(f"Authentication error: {e}")
+        return None, False, None
+
 # ==================== DATABASE INITIALIZATION ====================
 def init_database():
     try:
