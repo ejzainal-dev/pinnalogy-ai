@@ -9,6 +9,36 @@ import time
 import hashlib
 import json
 import os
+import streamlit as st
+import yaml
+from yaml.loader import SafeLoader
+from streamlit_authenticator import Authenticate
+import os
+def main():
+    # ==================== CHECK STRUCTURE (TEMP) ====================
+    st.subheader("📁 Project Structure Check")
+    st.write("Current directory:", os.getcwd())
+    st.write("All items in directory:", os.listdir('.'))
+    
+    important_files = {
+        'app.py': os.path.exists('app.py'),
+        '.streamlit/config.toml': os.path.exists('.streamlit/config.toml'),
+        'requirements.txt': os.path.exists('requirements.txt'),
+        'config.yaml': os.path.exists('config.yaml'),
+        'data folder': os.path.exists('data')
+    }
+    
+    st.write("File Status:")
+    for file, exists in important_files.items():
+        status = "✅ EXISTS" if exists else "❌ MISSING"
+        st.write(f"{status}: {file}")
+    # ==================== END CHECK ====================
+    
+    # Your existing authentication code continues here...
+    # Load config, authenticator, login, etc...
+
+if __name__ == "__main__":
+    main()
 from streamlit_authenticator import Authenticate
 
 # ===== CONFIGURATION =====
