@@ -396,7 +396,76 @@ def login_user(email, password):
     st.session_state.current_page = "Dashboard"
     
     return True, "Login successful"
+# ==================== SAMPLE DATA CREATION ====================
+def create_sample_patients():
+    """Create 30 sample patients with ear data - RUN THIS ONCE"""
+    
+    if st.sidebar.button("🔄 Create Sample Data (30 Patients)"):
+        try:
+            # Connect to database
+            conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+            cur = conn.cursor()
+            
+            st.info("🔄 Creating sample patients...")
+            
+            # Sample data arrays (sama seperti sebelumnya)
+            malay_names_male = ["Ahmad bin Abdullah", "Muhammad bin Ismail", "Ali bin Hassan", ...]  # copy dari code sebelumnya
+            malay_names_female = ["Aishah binti Mohd", "Siti binti Hassan", "Nor binti Ahmad", ...]
+            chinese_names = ["Tan Wei Ming", "Lim Chen Long", "Wong Mei Ling", ...]
+            indian_names = ["Raj Kumar", "Priya Devi", "Suresh Menon", ...]
+            
+            all_names = malay_names_male + malay_names_female + chinese_names + indian_names
+            
+            # ... (copy semua sample data arrays dari code sebelumnya)
+            
+            # Clear existing sample data
+            cur.execute("DELETE FROM ear_analyses WHERE patient_id IN (SELECT id FROM patients WHERE patient_code LIKE 'SMP%')")
+            cur.execute("DELETE FROM patients WHERE patient_code LIKE 'SMP%'")
+            
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            # Create 30 sample patients
+            for i in range(1, 31):
+                # ... (copy patient creation logic dari code sebelumnya)
+                
+                status_text.text(f"Creating patient {i}/30: {full_name}")
+                progress_bar.progress(i / 30)
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            st.success("🎉 Successfully created 30 sample patients!")
+            st.balloons()
+            
+        except Exception as e:
+            st.error(f"❌ Error creating sample data: {e}")
 
+# Dalam main function, tambah button di sidebar:
+def main():
+    initialize_session_state()
+    
+    if not st.session_state.authenticated:
+        login_page()
+    else:
+        st.sidebar.title("🩺 Pinnalogy AI")
+        st.sidebar.write(f"Welcome, {st.session_state.current_user}")
+        
+        # === TAMBAH BUTTON SAMPLE DATA DI SINI ===
+        if st.sidebar.button("📊 Create Sample Data", help="Create 30 demo patients"):
+            create_sample_patients()
+        st.sidebar.markdown("---")
+        # =========================================
+        
+        # Navigation menu terus di sini...
+        page = st.sidebar.radio(
+            "Navigate to:",
+            ["Dashboard", "Patient Management", "Ear Analysis", "Reports", "Sample Data"],
+            index=0
+        )
+        
+        # ... rest of the code
 # ===== PATIENT MANAGEMENT SYSTEM =====
 def generate_patient_id():
     """Generate unique patient ID"""
