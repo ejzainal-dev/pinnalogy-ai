@@ -2,16 +2,22 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from PIL import Image
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime
 import io
 import base64
-from datetime import datetime
 
 st.set_page_config(
     page_title="Pinnalogy AI - Ear Analysis",
     page_icon="👂",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
+# Rest of your application code would go here...
+st.title("Pinnalogy AI - Ear Analysis")
+st.write("Upload an ear image for analysis")
 # Custom CSS
 st.markdown("""
 <style>
