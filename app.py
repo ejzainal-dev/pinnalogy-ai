@@ -54,6 +54,36 @@ def init_supabase_database():
         return False
 
 def test_supabase_connection():
+    # ===== AUTHENTICATION =====
+def hash_password(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password, hashed_password):
+    """Verify password against hash"""
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except:
+        return False
+
+def authenticate_user(username, password):
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT username, name, password_hash, role FROM users WHERE username = %s",
+            (username.lower(),)
+        )
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        if result and verify_password(password, result[2]):
+            return result[1], True, result[0]
+        else:
+            return None, False, None
+    except Exception as e:
+        st.error(f"Authentication error: {e}")
+        return None, False, None
     """Test Supabase connection"""
     try:
         conn = psycopg2.connect(os.getenv('DATABASE_URL'))
