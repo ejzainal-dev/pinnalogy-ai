@@ -15,22 +15,68 @@ from yaml.loader import SafeLoader
 from streamlit_authenticator import Authenticate
 import os
 from streamlit_authenticator import Authenticate
-# ==================== DATABASE TEST ====================
-import psycopg2
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
+# ==================== DATABASE INITIALIZATION ====================
+def init_database():
+    try:
+        conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+        cur = conn.cursor()
+        
+        # Create users table jika belum exist
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                role VARCHAR(20) DEFAULT 'practitioner',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Check jika admin user sudah wujud
+        cur.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
+        admin_exists = cur.fetchone()[0]
+        
+        # Jika admin belum wujud, create admin user
+        if admin_exists == 0:
+            hashed_password = hash_password('admin123')
+            cur.execute("""
+                INSERT INTO users (username, email, name, password_hash, role) 
+                VALUES (%s, %s, %s, %s, %s)
+            """, ('admin', 'admin@pinnalogy.com', 'Admin User', hashed_password, 'admin'))
+            st.sidebar.success("✅ Admin user created!")
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        return True
+        
+    except Exception as e:
+        st.error(f"❌ Database initialization failed: {e}")
+        return False
 
 def test_database_connection():
     try:
         conn = psycopg2.connect(os.getenv('DATABASE_URL'))
         st.success("✅ PostgreSQL Connection SUCCESSFUL!")
         
+        # Initialize database tables & admin user
+        if init_database():
+            st.success("✅ Database tables & admin user created!")
+        
         cur = conn.cursor()
         cur.execute("SELECT version();")
         db_version = cur.fetchone()
         st.write(f"Database Version: {db_version[0]}")
+        
+        # Show existing users
+        cur.execute("SELECT username, email, role FROM users")
+        users = cur.fetchall()
+        if users:
+            st.write("**Existing Users:**")
+            for user in users:
+                st.write(f"- {user[0]} ({user[1]}) - {user[2]}")
         
         cur.close()
         conn.close()
