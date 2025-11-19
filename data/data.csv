@@ -1,1 +1,16 @@
-
+scan_id,patient_age,gender,scan_type,ear_condition,hearing_loss_db,canal_diameter,temperature,humidity,image_quality,diagnosis,confidence
+SCAN_001,45,Male,Pinna_3D,Normal,25,7.2,36.5,45,Excellent,Normal,0.95
+SCAN_002,62,Female,Pinna_2D,Infection,45,6.8,37.8,50,Good,Otitis_Externa,0.88
+SCAN_003,38,Male,Tympanic_Membrane,Normal,20,7.5,36.2,48,Excellent,Normal,0.92
+SCAN_004,55,Female,Pinna_3D,Wax_Buildup,35,6.5,36.7,52,Fair,Cerumen_Impaction,0.75
+SCAN_005,41,Male,Pinna_2D,Inflammation,40,7.0,37.2,47,Good,Otitis_Media,0.82
+SCAN_006,67,Female,Tympanic_Membrane,Perforation,60,6.2,36.9,49,Good,Tympanic_Perforation,0.90
+SCAN_007,29,Male,Pinna_3D,Normal,18,7.8,36.3,46,Excellent,Normal,0.96
+SCAN_008,50,Female,Pinna_2D,Infection,48,6.7,37.5,51,Good,Otitis_Externa,0.85
+SCAN_009,58,Male,Tympanic_Membrane,Scarring,55,6.9,36.8,53,Fair,Tympanosclerosis,0.78
+SCAN_010,33,Female,Pinna_3D,Normal,22,7.4,36.4,47,Excellent,Normal,0.94
+SCAN_011,47,Male,Pinna_2D,Wax_Buildup,30,6.6,36.6,50,Good,Cerumen_Impaction,0.80
+SCAN_012,63,Female,Tympanic_Membrane,Infection,65,6.3,37.9,54,Fair,Severe_Otitis,0.72
+SCAN_013,36,Male,Pinna_3D,Normal,19,7.6,36.1,45,Excellent,Normal,0.97
+SCAN_014,52,Female,Pinna_2D,Inflammation,42,6.8,37.3,52,Good,Otitis_Media,0.84
+SCAN_015,44,Male,Tympanic_Membrane,Normal,24,7.3,36.4,49,Excellent,Normal,0.93
