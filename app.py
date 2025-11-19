@@ -1,8 +1,10 @@
 import streamlit as st
-import tensorflow as tf
+try:
+    import tensorflow as tf
+except ImportError:
+    import tensorflow-cpu as tf  # Alternatif untuk CPU saja
 import cv2
 import numpy as np
-import pandas as pd
 from PIL import Image
 import tempfile
 from datetime import datetime
